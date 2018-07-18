@@ -51,8 +51,10 @@ for line in stdout.splitlines()[-1:-(nproc+1):-1]:
 
 sorted_procs = sorted(procs, key=lambda o: o['cnt'], reverse=True)
 plt.bar(
-    [o['pid'] for o in sorted_procs],
+    [o for o in range(0, len(sorted_procs))],
     [o['cnt'] for o in sorted_procs],
 )
 plt.axhline(total_cnt/nproc)
+plt.ylabel('cnt')
+plt.xlabel('proc #')
 plt.show()
