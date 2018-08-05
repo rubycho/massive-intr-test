@@ -3,44 +3,33 @@
     THE TARGET PROGRAM's last nproc lines should be:
     pid \t cnt
     ...
-
-    COMMAND SAMPLES:
-        [1] ./samples/massive_intr {} {}
-        [2] sudo ./samples/massive_intr_1 {} {}
 '''
+import os
 import signal
 import subprocess
 import matplotlib.pyplot as plt
-
-nproc = input("Process #: ")
-runtime = input("Run Time(s): ")
-
-print()
-print("massive_intr is running with {}procs for {}sec."
-    .format(nproc, runtime))
 
 # block signal coming from massive_intr
 signal.signal(signal.SIGUSR1, signal.SIG_IGN)
 
 procs = []
 total_cnt = 0
+
+os.chdir("./application")
 p = subprocess.run(
-        "sudo ./samples/massive_intr_1 {} {}".format(
-            nproc, runtime
-        ),
+        "sudo ./massive_intr",
         stdout=subprocess.PIPE,
         shell=True,
         check=True
     )
+os.chdir("..")
 
 stdout = p.stdout.decode("utf-8")
-
-print()
-print("STDOUT: ")
 print(stdout)
 
-nproc = int(nproc)
-for line in stdout.splitlines()[-1:-(nproc+1):-1]:
+content = stdout.split("[RESULT]\n")[1].splitlines()
+nproc = len(content)
+for line in content[-1:-(nproc+1):-1]:
     pid, cnt = line.split('\t')
     proc = {
         'pid': int(pid),
@@ -49,12 +38,12 @@ for line in stdout.splitlines()[-1:-(nproc+1):-1]:
     procs.append(proc)
     total_cnt += int(cnt)
 
-sorted_procs = sorted(procs, key=lambda o: o['cnt'], reverse=True)
+sorted_procs = sorted(procs, key=lambda o: o['pid'])
 plt.bar(
     [o for o in range(0, len(sorted_procs))],
     [o['cnt'] for o in sorted_procs],
 )
 plt.axhline(total_cnt/nproc)
 plt.ylabel('cnt')
-plt.xlabel('proc #')
+plt.xlabel('task #')
 plt.show()

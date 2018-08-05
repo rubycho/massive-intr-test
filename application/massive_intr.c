@@ -112,7 +112,6 @@ Satoru
  */
 
 #include <sys/time.h>
-#include <sys/resource.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
@@ -127,8 +126,10 @@ Satoru
 #include <errno.h>
 #include <err.h>
 
-#define WORK_MSECS	8
-#define SLEEP_MSECS	1
+#include "parser.h"
+
+#define DEFAULT_WORK_MSECS	8
+#define DEFAULT_SLEEP_MSECS	1
 
 #define MAX_PROC	1024
 #define SAMPLE_COUNT	1000000000
@@ -138,6 +139,7 @@ Satoru
 #define SHMEMSIZE	4096
 
 static const char *shmname = "/sched_interactive_shmem";
+static const char *configname = "config.ini";
 static void *shmem;
 static sem_t *printsem;
 static int nproc;
@@ -146,7 +148,9 @@ static int fd;
 static time_t *first;
 static pid_t pid[MAX_PROC];
 static int return_code;
-static int nice_val=-21;
+
+static int work_msecs;
+static int sleep_msecs;
 
 static void cleanup_resources(void)
 {
@@ -156,7 +160,7 @@ static void cleanup_resources(void)
 		warn("munmap() failed");
 	if (close(fd) < 0)
 		warn("close() failed");
-}	
+}
 
 static void abnormal_exit(void)
 {
@@ -203,7 +207,7 @@ static void *test_job(void *arg)
 	time_t current;
 	sigset_t sigset;
 	struct sigaction sa;
-	struct timespec ts = { 0, NSECS_PER_MSEC*SLEEP_MSECS};
+	struct timespec ts = { 0, NSECS_PER_MSEC*sleep_msecs};
 
 	usleep(200000);
 	sa.sa_handler = sighandler;
@@ -227,7 +231,7 @@ static void *test_job(void *arg)
 	}
 	/* main loop */
 	do {
-		loopfnc(WORK_MSECS*l);
+		loopfnc(work_msecs*l);
 		if (nanosleep(&ts, NULL) < 0) {
 			warn("nanosleep() failed");
 			abnormal_exit();
@@ -268,15 +272,28 @@ int main(int argc, char **argv)
 	struct sigaction sa;
 	int c;
 
+	/*
 	if (argc != 3)
 		usage();
+	*/
 
+	run_config *config = parse_config(configname);
+	fprintf(stdout, "[RESULT]\n"); fflush(stdout);
+	if (config == NULL) exit(EXIT_FAILURE);
+
+	nproc = config->task_num ? config->task_num : 10;
+	runtime = config->runtime ? config->runtime : 10;
+	work_msecs = config->set_work_msecs ? config->work_msecs : DEFAULT_WORK_MSECS;
+	sleep_msecs = config->set_sleep_msecs ? config->sleep_msecs : DEFAULT_SLEEP_MSECS;
+
+	/*
 	nproc = strtol(argv[1], NULL, 10);
 	if (errno || nproc < 1 || nproc > MAX_PROC)
 		err(EXIT_FAILURE, "invalid multinum");
 	runtime = strtol(argv[2], NULL, 10);
 	if (errno || runtime <= 0)
 		err(EXIT_FAILURE, "invalid runtime");
+	*/
 
 	sa.sa_handler = sighandler2;
 	if (sigemptyset(&sa.sa_mask) < 0)
@@ -311,7 +328,7 @@ int main(int argc, char **argv)
 	}
 	printsem = shmem;
 	first = shmem + sizeof(*printsem);
-	
+
 	/* initialize semaphore */
 	if ((sem_init(printsem, 1, 1)) < 0) {
 		warn("sem_init() failed");
@@ -324,7 +341,7 @@ int main(int argc, char **argv)
 	}
 
 	for (i = 0; i < nproc; i++) {
-		pid[i] = fork(); nice_val++;
+		pid[i] = fork();
 		if (pid[i] == -1) {
 			warn("fork() failed\n");
 			for (j = 0; j < i; j++)
@@ -333,10 +350,9 @@ int main(int argc, char **argv)
 			goto err_sem;
 		}
 		if (pid[i] == 0) {
-      setpriority(PRIO_PROCESS, getpid(), nice_val);
-      fprintf(stderr, "pid: %d, prio: %d\n", getpid(), getpriority(PRIO_PROCESS, getpid()));
+			apply_task_config(config->head[i]);
 			test_job((void *)c);
-    }
+		}
 	}
 
 	if (sigemptyset(&sigset) < 0) {
@@ -380,6 +396,6 @@ int main(int argc, char **argv)
 		warn("munmap() failed");
  err_close:
 	if (close(fd) < 0)
-		warn("close() failed");	
+		warn("close() failed");
 	exit(EXIT_FAILURE);
 }
