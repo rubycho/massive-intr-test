@@ -3,6 +3,7 @@
     Plot graph
 '''
 import os
+import subprocess
 import matplotlib.pyplot as plt
 
 target = "bw="
