@@ -9,9 +9,16 @@ target = "bw="
 delimiter = ","
 unit = "KB/s"
 
-filename = input("file path: ")
-with open(filename) as f:
-    content = f.readlines()
+cmd = input("FIO COMMAND: ")
+p = subprocess.run(
+        cmd,
+        stdout=subprocess.PIPE,
+        shell=True,
+        check=True
+    )
+
+stdout = p.stdout.decode("utf-8")
+content = stdout.splitlines()
 
 speeds = []
 total = 0
