@@ -139,7 +139,6 @@ Satoru
 #define SHMEMSIZE	4096
 
 static const char *shmname = "/sched_interactive_shmem";
-static const char *configname = "config.ini";
 static void *shmem;
 static sem_t *printsem;
 static int nproc;
@@ -257,10 +256,16 @@ static void *test_job(void *arg)
 
 static void usage(void)
 {
+	/*
 	fprintf(stderr,
 		"Usage : massive_intr <nproc> <runtime>\n"
 		"\t\tnproc  : number of processes\n"
 		"\t\truntime   : execute time[sec]\n");
+	exit(EXIT_FAILURE);
+	*/
+	fprintf(stderr,
+		"Usage: massive_intr <configfile>\n"
+		"\t\tconfigfile : path to the config file\n");
 	exit(EXIT_FAILURE);
 }
 
@@ -272,12 +277,10 @@ int main(int argc, char **argv)
 	struct sigaction sa;
 	int c;
 
-	/*
-	if (argc != 3)
+	if (argc != 2)
 		usage();
-	*/
 
-	run_config *config = parse_config(configname);
+	run_config *config = parse_config(argv[1]);
 	fprintf(stdout, "[RESULT]\n"); fflush(stdout);
 	if (config == NULL) exit(EXIT_FAILURE);
 

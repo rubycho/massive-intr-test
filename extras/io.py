@@ -42,5 +42,5 @@ plt.ylabel('{} (unit: {})'.format(
     target.replace("=", ""),
     unit
 ))
-plt.xlabel('job #')
+plt.xlabel('job index')
 plt.show()

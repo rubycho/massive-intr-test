@@ -14,15 +14,16 @@ signal.signal(signal.SIGUSR1, signal.SIG_IGN)
 
 procs = []
 total_cnt = 0
+configfile = input("Config File Path: ")
 
-os.chdir("./application")
 p = subprocess.run(
-        "sudo ./massive_intr",
+        "sudo ./application/massive_intr {}".format(
+            configfile
+        ),
         stdout=subprocess.PIPE,
         shell=True,
         check=True
     )
-os.chdir("..")
 
 stdout = p.stdout.decode("utf-8")
 print(stdout)
@@ -44,6 +45,6 @@ plt.bar(
     [o['cnt'] for o in sorted_procs],
 )
 plt.axhline(total_cnt/nproc)
-plt.ylabel('cnt')
-plt.xlabel('task #')
+plt.ylabel('loop count')
+plt.xlabel('task index')
 plt.show()
