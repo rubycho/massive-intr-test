@@ -265,7 +265,7 @@ static void usage(void)
 	*/
 	fprintf(stderr,
 		"Usage: massive_intr <configfile>\n"
-		"\t\tconfigfile : path to the config file\n");
+		"\t\tconfigfile : path to config file\n");
 	exit(EXIT_FAILURE);
 }
 

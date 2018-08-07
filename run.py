@@ -5,6 +5,7 @@
     ...
 '''
 import os
+import sys
 import signal
 import subprocess
 import matplotlib.pyplot as plt
@@ -14,11 +15,16 @@ signal.signal(signal.SIGUSR1, signal.SIG_IGN)
 
 procs = []
 total_cnt = 0
-configfile = input("Config File Path: ")
 
+if len(sys.argv) != 2:
+    print("{} <configfile>".format(sys.argv[0]))
+    print("\t\tconfigfile: path to config file")
+    sys.exit(1)
+
+print("Waiting massive_intr to terminate...\n")
 p = subprocess.run(
         "sudo ./application/massive_intr {}".format(
-            configfile
+            sys.argv[1]
         ),
         stdout=subprocess.PIPE,
         shell=True,
