@@ -25,7 +25,7 @@ speeds = []
 total = 0
 for line in content:
     if target in line:
-        speed = int(
+        speed = float(
                     line.split(target)[1] \
                     .split(delimiter)[0] \
                     .replace(unit, "")
