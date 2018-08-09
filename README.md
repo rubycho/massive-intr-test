@@ -32,13 +32,13 @@ make
 ### Simple Run
 ~~~
 # run massive_intr on ./application
-sudo ./massive_intr
+sudo ./massive_intr {configfile}
 ~~~
 
 ### Run (with graph)
 ~~~
 # if you activated virtualenv
-python run.py
+python run.py {configfile}
 # if not,
-python3 run.py
+python3 run.py {configfile}
 ~~~
